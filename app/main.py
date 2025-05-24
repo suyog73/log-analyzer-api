@@ -2,18 +2,24 @@ from fastapi import FastAPI, HTTPException
 from typing import Optional
 from datetime import datetime
 from log_parser import load_logs, LOG_FORMAT
+from fastapi import Request
 
 app = FastAPI()
 
 @app.get("/logs")
 def get_logs(
+    request: Request,
     level: Optional[str] = None,
     component: Optional[str] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None
 ):
+    allowed_params = {"level", "component", "start_time", "end_time", "limit", "offset"}
     logs = load_logs()  # Reload logs every time this endpoint is called
     filtered = logs
+    for param in request.query_params.keys():
+        if param not in allowed_params:
+            raise HTTPException(status_code=400, detail=f"Unknown query parameter: {param}")
 
     if level:
         filtered = [log for log in filtered if log.level.upper() == level.upper()]
