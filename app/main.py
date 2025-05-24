@@ -1,11 +1,9 @@
-from fastapi import FastAPI, HTTPException, Query
-from typing import List, Optional
+from fastapi import FastAPI, HTTPException
+from typing import Optional
 from datetime import datetime
 from log_parser import load_logs, LOG_FORMAT
 
 app = FastAPI()
-logs = load_logs()
-log_map = {log.id: log for log in logs}  # for quick lookup
 
 @app.get("/logs")
 def get_logs(
@@ -14,6 +12,7 @@ def get_logs(
     start_time: Optional[str] = None,
     end_time: Optional[str] = None
 ):
+    logs = load_logs()  # Reload logs every time this endpoint is called
     filtered = logs
 
     if level:
@@ -37,6 +36,7 @@ def get_logs(
 
 @app.get("/logs/stats")
 def get_stats():
+    logs = load_logs()  # Reload logs
     total = len(logs)
     level_counts = {}
     component_counts = {}
@@ -53,7 +53,8 @@ def get_stats():
 
 @app.get("/logs/{log_id}")
 def get_log_by_id(log_id: str):
-    log = log_map.get(log_id)
-    if not log:
-        raise HTTPException(status_code=404, detail="Log entry not found.")
-    return log.to_dict()
+    logs = load_logs()  # Reload logs
+    for log in logs:
+        if log.id == log_id:
+            return log.to_dict()
+    raise HTTPException(status_code=404, detail="Log entry not found.")

@@ -1,5 +1,6 @@
 import os
 import uuid
+import hashlib
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,7 +9,8 @@ LOG_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class LogEntry:
     def __init__(self, timestamp, level, component, message):
-        self.id = str(uuid.uuid4())
+        raw_string = f"{timestamp}{level}{component}{message}"
+        self.id = hashlib.md5(raw_string.encode()).hexdigest()
         self.timestamp = timestamp
         self.level = level
         self.component = component
